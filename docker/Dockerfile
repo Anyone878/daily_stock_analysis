@@ -42,7 +42,13 @@ RUN groupadd -g 1000 dsa && \
 COPY requirements.txt .
 
 # 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --no-cache-dir -r requirements.txt
+
+# efinance 运行时会写入包内 data 目录，授权给 non-root 用户
+RUN if [ -d /usr/local/lib/python3.11/site-packages/efinance ]; then \
+        mkdir -p /usr/local/lib/python3.11/site-packages/efinance/data && \
+        chown -R dsa:dsa /usr/local/lib/python3.11/site-packages/efinance; \
+    fi
 
 # 复制应用代码
 COPY *.py ./

@@ -20,6 +20,9 @@ x-common: &common
   env_file:
     - ../.env
 
+  depends_on:
+    - searxng
+
   volumes:
     - ../data:/app/data
     - ../logs:/app/logs
@@ -35,6 +38,9 @@ x-common: &common
     # Web/API service bind address (must be 0.0.0.0 inside container)
     - WEBUI_HOST=0.0.0.0
     # API_PORT 从 .env 文件读取，无需在此硬编码
+
+    - SEARXNG_BASE_URLS=http://searxng:8080
+    - SEARXNG_PUBLIC_INSTANCES_ENABLED=false
 
     # 代理设置（如果需要）
     # - http_proxy=http://host.docker.internal:10809
@@ -53,6 +59,23 @@ x-common: &common
         memory: 256M
 
 services:
+  # SearXNG 搜索服务
+  searxng:
+    image: searxng/searxng:latest
+    container_name: stock-searxng
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../searxng:/etc/searxng
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
   # 定时任务模式
   analyzer:
     <<: *common
